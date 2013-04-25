@@ -13,7 +13,7 @@
 KilnRun::KilnRun()
 {
   coneNDX = 0;
-  
+  candleTime = 0;// candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
   holdHrs = 0; // hold the kiln at the target temperature for this many hours
   speedMode = fast;
 }//KilnRun
@@ -23,7 +23,14 @@ KilnRun::KilnRun()
  */
 void KilnRun::candlePressed()
 {
-  
+  if(12==candleTime)
+  {
+    candleTime = 0;
+  }
+  else
+  {
+    candleTime += 2;
+  }
 }// candlePressed
 
 /**
@@ -31,7 +38,14 @@ void KilnRun::candlePressed()
  */
 void KilnRun::conePressed()
 {
-  
+  if(coneMaxNdx==coneNDX)
+  {
+    coneNDX = 0;
+  }
+  else
+  {
+    coneNDX++;
+  }
 }// conePressed
 
 /**
@@ -39,15 +53,31 @@ void KilnRun::conePressed()
  */
 void KilnRun::holdPressed()
 {
-  
+  if(4==holdHrs)
+  {
+    holdHrs = 0;
+  }
+  else
+  {
+    holdHrs++;
+  }
 }// holdPressed
 
 /**
  * called when the speed buton is pressed
+ * "Fast", "Medium", "Slow", "Slow Annealing", "Medium Annealing"
  */
 void KilnRun::speedPressed()
 {
-  
+  if(4==((int)speedMode))
+  {
+    speedMode = slow;
+  }
+  else
+  {
+    speedMode = (Speed)(((int)speedMode)+1);
+    //((int)speedMode) += 1;
+  }
 }// speedPressed
 
 /**
@@ -63,8 +93,16 @@ void KilnRun::startPressed()
  */
 void KilnRun::clearPressed()
 {
-  
+  if(isStarted())
+    return;
+  coneNDX = 0;
+  candleTime = 0;
+  holdHrs = 0;
+  speedMode = fast;
 }// clearPressed
 
-
+bool KilnRun::isStarted()
+{
+  
+}// isStarted
 

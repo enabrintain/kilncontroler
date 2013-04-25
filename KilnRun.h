@@ -4,8 +4,8 @@
 
 enum Speed       
 {
-    fast=0,       
-    medium = 1,     
+    fast=0,
+    medium = 1,
     slow = 2,
     aneal_slow = 3,
     aneal_medium = 4
@@ -28,6 +28,8 @@ class KilnRun {
     void speedPressed();
     void startPressed();
     void clearPressed();
+    
+    bool isStarted();
 
   /*double readInternal(void);
   double readInternalF(void);
@@ -36,7 +38,7 @@ class KilnRun {
   uint8_t readError();//*/
 
  private:
- 
+  int candleTime; // candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
   int coneNDX; // selected temperature target
   int holdHrs; // hold the kiln at the target temperature for this many hours
   Speed speedMode;

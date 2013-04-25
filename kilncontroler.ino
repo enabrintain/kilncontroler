@@ -39,11 +39,7 @@ const int CS = 4; // (chip select) is an input to the MAX31855 (output from the 
 const int LED = 3; // output LED
 const int CLEAR = 2; // pushing this resets things
 
-
-
-
-
-
+//
 KilnRun thisRun;
 
 // Initialize the Thermocouple
@@ -59,6 +55,13 @@ unsigned long windowStartTime;
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &Setpoint,2,5,1, DIRECT);
 
+//These are internal variables to the parseButtons
+int lastCANDLE = HIGH;
+int lastCONE = HIGH;
+int lastHOLD = HIGH;
+int lastSPEED = HIGH;
+int lastSTART = HIGH;
+int lastCLEAR = HIGH;
 
 /*******************************
  * SETUP
@@ -104,8 +107,8 @@ void setup() {
 /********************************
  * MAIN LOOP
  ********************************/
-void loop() {
-  
+void loop()
+{
   
    /********** THERMOCOUPLE LOOP **********/
    double temperature = thermocouple.readFarenheit();
@@ -131,11 +134,24 @@ void loop() {
    /********** INPUT BUTTON LOOP **********/
    parseButtons();
    
-
-   
-
    /********** PID LOOP **********/
-   Input = temperature;
+   if(thisRun.isStarted())
+     kiln(temperature);
+}// loop
+
+
+
+
+/********************************
+ * Called from MAIN LOOP
+ ********************************/
+ 
+ /**
+  * This fn handles the task on turning on and off the kiln relay
+  */
+ void kiln(double currentTemperature)
+ {
+   Input = currentTemperature;
    myPID.Compute();
 
   /************************************************
@@ -160,20 +176,9 @@ void loop() {
   analogWrite(3,Output);
   digitalWrite(relay, HIGH);   	// turn the relay on
   //  */
-}// loop
-
-
-
-
-/********************************
- * Called from MAIN LOOP
- ********************************/
- int lastCANDLE = HIGH;
- int lastCONE = HIGH;
- int lastHOLD = HIGH;
- int lastSPEED = HIGH;
- int lastSTART = HIGH;
- int lastCLEAR = HIGH;
+ }// kiln
+ 
+ 
 int parseButtons()
 {
    int buttonState = 0;         // current state of the button  
@@ -267,9 +272,6 @@ int parseButtons()
      }
    }//button state changed
    lastCLEAR = buttonState;// save the current state as the last state
-   
-  
-
   return buttonState;
 }// parseButton
 
