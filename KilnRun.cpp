@@ -16,6 +16,7 @@ KilnRun::KilnRun()
   candleTime = 0;// candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
   holdHrs = 0; // hold the kiln at the target temperature for this many hours
   speedMode = fast;
+  started = false;
 }//KilnRun
 
 /**
@@ -53,13 +54,10 @@ void KilnRun::conePressed()
  */
 void KilnRun::holdPressed()
 {
-  if(4==holdHrs)
+  holdHrs++;
+  if(5==holdHrs)
   {
     holdHrs = 0;
-  }
-  else
-  {
-    holdHrs++;
   }
 }// holdPressed
 
@@ -85,7 +83,7 @@ void KilnRun::speedPressed()
  */
 void KilnRun::startPressed()
 {
-  
+  started = true;
 }// startPressed
 
 /**
@@ -103,6 +101,11 @@ void KilnRun::clearPressed()
 
 bool KilnRun::isStarted()
 {
-  
+  return started;
 }// isStarted
+
+void KilnRun::firingDone()
+{
+  started = false;
+}// firingDone
 

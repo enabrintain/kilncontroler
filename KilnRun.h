@@ -30,6 +30,7 @@ class KilnRun {
     void clearPressed();
     
     bool isStarted();
+    void firingDone();
 
   /*double readInternal(void);
   double readInternalF(void);
@@ -42,6 +43,7 @@ class KilnRun {
   int coneNDX; // selected temperature target
   int holdHrs; // hold the kiln at the target temperature for this many hours
   Speed speedMode;
+  bool started;
   //int8_t sclk, miso, cs;
   //uint32_t spiread32(void);
 };
