@@ -2,6 +2,8 @@
  #ifndef KILNRUN_H
  #define KILNRUN_H
 
+#include <Time.h>
+
 enum Speed       
 {
     fast=0,
@@ -31,6 +33,7 @@ class KilnRun {
     
     bool isStarted();
     void firingDone();
+    double getTargetTemp(double currentTemp);
 
   /*double readInternal(void);
   double readInternalF(void);
@@ -44,8 +47,20 @@ class KilnRun {
   int holdHrs; // hold the kiln at the target temperature for this many hours
   Speed speedMode;
   bool started;
-  //int8_t sclk, miso, cs;
-  //uint32_t spiread32(void);
+  int segment;
+  
+  bool adjustTimeForRoomTemp;
+  time_t initialSegTime;
+  time_t initialSeg0;
+  time_t elapsedSeg0;
+  time_t initialSeg2;
+  time_t elapsedSeg2;
+  time_t initialSeg4;
+  time_t elapsedSeg4;
+  time_t initialSeg6;
+  time_t elapsedSeg6;
+  time_t initialSeg8;
+  time_t elapsedSeg8;
 };
 
  #endif 
