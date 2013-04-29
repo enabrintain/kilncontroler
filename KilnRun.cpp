@@ -6,6 +6,7 @@
  *  150 degrees an hour to 500; hold for ten minutes.
  *  200 degrees an hour to 1000; hold for ten minutes.
  *  300 degrees an hour to the desired temperature is reached; end of firing.
+ TODO:FIX THIS COMMENT
  *
 /*************************************************************************/
 
@@ -206,10 +207,10 @@ double KilnRun::getTargetTemp(double currentTemp)
     case slow:
       segmentRate_2 = 150; //150 F/hr 
       break;
-    case aneal_slow:
+    case anneal_slow:
       segmentRate_2 = 150; //150 F/hr 
       break;
-    case aneal_medium:
+    case anneal_medium:
       segmentRate_2 = 180; //150 F/hr 
       break;
     default:
@@ -256,10 +257,10 @@ double KilnRun::getTargetTemp(double currentTemp)
     case slow:
       segmentRate_4 = 200; //200 F/hr 
       break;
-    case aneal_slow:
+    case anneal_slow:
       segmentRate_4 = 200; //200 F/hr 
       break;
-    case aneal_medium:
+    case anneal_medium:
       segmentRate_4 = 250; //250 F/hr 
       break;
     default:
@@ -306,10 +307,10 @@ double KilnRun::getTargetTemp(double currentTemp)
     case slow:
       segmentRate_6 = 300; //200 F/hr 
       break;
-    case aneal_slow:
+    case anneal_slow:
       segmentRate_6 = 300; //200 F/hr 
       break;
-    case aneal_medium:
+    case anneal_medium:
       segmentRate_6 = 400; //250 F/hr 
       break;
     default:
@@ -340,11 +341,12 @@ double KilnRun::getTargetTemp(double currentTemp)
     return segmentTargetTemp_7;
   }// hold for holdHrs.
   
-  /******* Segment 8 (aneal stage) *********/
+  /******* Segment 8 (anneal stage) *********/
+  //TODO:Decide if anneal needs 2 speeds like in enum
   if(initialSeg8==-1)
     initialSeg8 = now_;
   
-  if(speedMode==aneal_slow || speedMode==aneal_medium)
+  if(speedMode==anneal_slow || speedMode==anneal_medium)
   {
     int segmentTargetTemp_8a = 1000;
     //Anneal I: Fast ramp down then hold to thoroughly equalize temperatures. (let cool to 1000) hold for an hour

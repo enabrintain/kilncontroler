@@ -9,8 +9,8 @@ enum Speed
     fast=0,
     medium = 1,
     slow = 2,
-    aneal_slow = 3,
-    aneal_medium = 4
+    anneal_slow = 3,
+    anneal_medium = 4
 };
 
 
