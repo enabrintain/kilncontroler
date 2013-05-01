@@ -145,6 +145,25 @@ void KilnRun::firingDone()
   segment = -1;
 }// firingDone
 
+/**
+ * This method drives the the firing protocol. I expect it to be called every 30sec or so. 
+ * Given the current time, it picks the target temperature for that 30 second block. 
+ * That temp is then fed into the PID control code and that is how the kiln is run.
+ * 
+ * We break the firing protocol into 9 segments, some are optional:
+ * 	Segment 0 is the ramp up to candling. it runs at 80degF/hr and ends at 200degF
+ *	Segment 1 is the candling stage. we hold at 200 for as many hours as the user selected
+ *	Segment 2 is the ramp up to 500degF, the rate here is variable, depending on the speed selected by the user
+ *	Segment 3 is a rest stage, hold at 500 for 10 min
+ *	Segment 4 is the ramp up to 1000degF, the rate here is variable, depending on the speed selected by the user
+ *	Segment 5 is a rest stage, hold at 1000 for 10 min
+ *	Segment 6 is the ramp up to the user selected Cone temp, the rate here is variable, depending on the speed selected by the user the lowest conetemp, Cone 022, is 1094degF so we dont have to worry about Segment 4 or 5 taking us over the desired temp.
+ *	Segment 7 is the Hold stage, the user can choose to hold at the selected temp for a selected number of hours
+ *	Segment 8 is the annealing stage, its actually broken into 3 subsegments: cooling down to 1000degF, cooling to 800degF, cooling to 400degF. I havent decided whether to make the annealing stage cooling rates variable or not.
+ *
+ * This method saves stage start and elapsed times in member variables (initialSeg0, initialSeg1, ...) and (elapsedSeg0, elapsedSeg1, ...) an uses them to calculate the value of "targetTime" for a given stage, given the rate and final temp for that stage.
+ * As stages' target temps are reached, the control flow drops through the various if blocks to proceding stages, incrementing "targetTime" with the elapsed times of the previous stages.
+ */
 double KilnRun::getTargetTemp(double currentTemp)
 { 
   if(!started)
@@ -160,7 +179,7 @@ double KilnRun::getTargetTemp(double currentTemp)
     initialSegTime = now_;
   int segmentTargetTemp_0 = 200;
   int segmentRate_0 = 80;
-  time_t segment0 = segmentTargetTemp_0/segmentRate_0 * 3600; // raise temp to 200 @ 80F/hr
+  time_t segment0 = segmentTargetTemp_0/segmentRate_0 * 3600; // number of secs it will take to raise to target temp, given the segment rate
   targetTime = initialSegTime + segment0;
   if(now_ <= targetTime)
   {
@@ -170,7 +189,7 @@ double KilnRun::getTargetTemp(double currentTemp)
       time_t equivalentTime = (time_t)currentTemp * (3600/segmentRate_0); 
       setTime(equivalentTime);
       adjustTimeForRoomTemp = false; //do this only once
-      return currentTemp;
+      return currentTemp+1;// 80F/hr is .66F/30sec
     }
     return now_*segmentRate_0/3600;
   }// handle heating up to candle segment
@@ -217,7 +236,7 @@ double KilnRun::getTargetTemp(double currentTemp)
       segmentRate_2 = 450; //450F/hr *this is arbitrary-pms
       break;
   }
-  time_t segment2 = ((segmentTargetTemp_2-segmentTargetTemp_1)/segmentRate_2 * 3600); //150 degrees an hour to 500;
+  time_t segment2 = ((segmentTargetTemp_2-segmentTargetTemp_1)/segmentRate_2 * 3600); // number of secs it will take to raise to target temp, given the segment rate
   targetTime += segment2;
   if(now_ <= targetTime)
   {
@@ -267,7 +286,7 @@ double KilnRun::getTargetTemp(double currentTemp)
       segmentRate_4 = 450; //450F/hr *this is arbitrary-pms
       break;
   }
-  time_t segment4 = ((segmentTargetTemp_4-segmentTargetTemp_3)/segmentRate_4 * 3600); //200 degrees an hour to 1000;
+  time_t segment4 = ((segmentTargetTemp_4-segmentTargetTemp_3)/segmentRate_4 * 3600); // number of secs it will take to raise to target temp, given the segment rate
   targetTime += segment4;
   if(now() <= targetTime)
   {
@@ -317,7 +336,7 @@ double KilnRun::getTargetTemp(double currentTemp)
       segmentRate_6 = 500; //450F/hr *this is arbitrary-pms
       break;
   }
-  time_t segment6 = ((segmentTargetTemp_6-segmentTargetTemp_5)/segmentRate_6 * 3600);//300 degrees an hour to the desired temperature is reached; end of firing.
+  time_t segment6 = ((segmentTargetTemp_6-segmentTargetTemp_5)/segmentRate_6 * 3600); // number of secs it will take to raise to target temp, given the segment rate
   targetTime += segment6;
   if(now_ <= targetTime)
   {

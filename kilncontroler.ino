@@ -38,25 +38,31 @@
 #include <TimeAlarms.h>
 
 
-const int CANDLE = 13; // candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
-const int CONE = 12; // choose kiln temp
-const int HOLD = 11; // hold time at target temp, in hrs
-const int SPEED = 10; // choose the speed/mode program 
-const int START= 9; // starts the kiln heating program, CONE, HOLD, and SPEED are no longer read after starting, CLEAR will reset this.
-const int RELAY = 6; // the pin for turning on and off the heating coils
-const int DO = 3; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
-const int CLK = 5; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
-const int CS = 4; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
-const int LED = 3; // output LED
-const int CLEAR = 2; // pushing this resets things
-const int chipSelect = 10;
+const int RELAY = 0; // the pin for turning on and off the heating coils
+
+const int SD_SCK = 13; // sd card
+const int SD_MISO = 12; // sd card
+const int SD_MOSI = 11; // sd card
+const int SD_CS = 10; // sd card
+
+const int DO = 1; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
+const int CLK = 2; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
+const int CS = 3; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
+
+const int CANDLE = 14; // candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
+const int CONE = 15; // choose kiln temp
+const int HOLD = 16; // hold time at target temp, in hrs
+const int SPEED = 17; // choose the speed/mode program 
+const int START= 18; // starts the kiln heating program, CONE, HOLD, and SPEED are no longer read after starting, CLEAR will reset this.
+const int CLEAR = 19; // pushing this resets things
+
 //
 KilnRun thisRun;
 
 // Initialize the Thermocouple
 Adafruit_MAX31855 thermocouple(CLK, CS, DO);
 // initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
+LiquidCrystal lcd(4, 5, 6, 7, 8, 9);
 
 //Define PID Variables we'll be connecting to
 double Setpoint, Input, Output;
@@ -80,23 +86,7 @@ bool sdCardInited = false;
  * SETUP
  ********************************/
 void setup() {
-  Serial.begin(9600);
-  
-  Serial.print("Initializing SD card...");
-  // make sure that the default chip select pin is set to
-  // output, even if you don't use it:
-  pinMode(10, OUTPUT);
-  
-  // see if the card is present and can be initialized:
-  if (!SD.begin(chipSelect)) {
-    Serial.println("Card failed, or not present");
-    // don't do anything more:
-    return;
-  }
-  else
-    sdCardInited = true;
-  Serial.println("card initialized.");
-  
+    
   /********** BUTTON SETUP **********/
   pinMode(CANDLE, INPUT); // initialize the button pin as a input
   digitalWrite(CANDLE, HIGH);       // turn on pullup resistor, *pull-up configuration — when the button is not pressed, the Arduino will sense high voltage. 
@@ -110,9 +100,34 @@ void setup() {
   digitalWrite(START, HIGH);       // turn on pullup resistor
   pinMode(CLEAR, INPUT); // initialize the button pin as a input
   digitalWrite(CLEAR, HIGH);       // turn on pullup resistor
+  
   // initialize the LED as an output
-  pinMode(LED, OUTPUT);
   pinMode(RELAY, OUTPUT); // initialize the relay pin as output
+  digitalWrite(RELAY,LOW);
+  
+  
+  /********** LCD SETUP **********/
+  // set up the LCD's number of columns and rows: 
+  lcd.begin(16, 2);
+  lcd.print("MAX31855 test");
+  // wait for MAX chip to stabilize
+  delay(500);
+  
+  
+  /********** SD SETUP **********/
+  // make sure that the default chip select pin is set to
+  // output, even if you don't use it:
+  pinMode(SD_CS, OUTPUT);
+  
+  // see if the card is present and can be initialized:
+  if (!SD.begin(SD_CS)) {
+    //Serial.println("Card failed, or not present");
+    // don't do anything more:
+    return;
+  }
+  else
+    sdCardInited = true;
+  
   
   /********** PID Setup **********/
   //initialize the variables we're linked to
@@ -123,16 +138,12 @@ void setup() {
   myPID.SetOutputLimits(0, WindowSize);
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
-  
-  // set up the LCD's number of columns and rows: 
-  lcd.begin(16, 2);
-  lcd.print("MAX31855 test");
-  // wait for MAX chip to stabilize
-  delay(500);
 }// setup
 
 void writeToSD(String msg)
 {
+  if(!sdCardInited)
+    return;
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
   File dataFile = SD.open("kiln_log.txt", FILE_WRITE);
@@ -140,12 +151,10 @@ void writeToSD(String msg)
   if (dataFile) {
     dataFile.println(millis() + "," + msg);
     dataFile.close();
-    // print to the serial port too:
-    Serial.println(msg);
   }  
   // if the file isn't open, pop up an error:
   else {
-    Serial.println("error opening datalog.txt");
+    //Serial.println("error opening datalog.txt");
   } 
 }// writeToSD
 
@@ -154,12 +163,25 @@ void writeToSD(String msg)
  ********************************/
 void loop()
 {
-  if(!sdCardInited)
-    return;
+  /*
+  //Serial.println("low");
+  digitalWrite(RELAY,LOW);
+     
+   /********** DELAY 30 SEC **********
+   delay(1000);              // wait for 30 seconds
+  
+  //Serial.println("high");
+  digitalWrite(RELAY,HIGH);
+     
+   /********** DELAY 30 SEC **********
+   delay(1000);              // wait for 30 seconds
+   //*/
+   
   
    /********** THERMOCOUPLE LOOP **********/
    double temperature = thermocouple.readFarenheit();
    writeToSD("loop,temp:,"+doubleToString(temperature,1));
+   
    
    /********** LCD LOOP **********/
    // basic readout test, just print the current temp
@@ -177,14 +199,17 @@ void loop()
      lcd.print("F = "); 
      lcd.print(temperature);
      lcd.print("  "); 
-   }   
+   }//*/
+   
    
    /********** INPUT BUTTON LOOP **********/
    parseButtons();
    
+   
    /********** PID LOOP **********/
    if(thisRun.isStarted())
      kiln(temperature);
+     
      
    /********** DELAY 30 SEC **********/
    delay(30000);              // wait for 30 seconds
