@@ -28,6 +28,8 @@
   http://lordvon64.blogspot.com/2012/01/simple-arduino-double-to-string.html
  *******************************************************************/
 
+TODO: Add a delete log step to the setup so the log doesnt get cluttered with bad data
+
 #include "Adafruit_MAX31855.h"
 #include "KilnRun.h" 
 #include <LiquidCrystal.h>
@@ -45,9 +47,9 @@ const int SD_MISO = 12; // sd card
 const int SD_MOSI = 11; // sd card
 const int SD_CS = 10; // sd card
 
-const int DO = 1; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
-const int CLK = 2; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
-const int CS = 3; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
+const int THERM_DO = 1; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
+const int THERM_CS = 2; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
+const int THERM_CLK = 3; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
 
 const int CANDLE = 14; // candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
 const int CONE = 15; // choose kiln temp
@@ -60,7 +62,7 @@ const int CLEAR = 19; // pushing this resets things
 KilnRun thisRun;
 
 // Initialize the Thermocouple
-Adafruit_MAX31855 thermocouple(CLK, CS, DO);
+Adafruit_MAX31855 thermocouple(THERM_CLK, THERM_CS, THERM_DO);
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(4, 5, 6, 7, 8, 9);
 
@@ -109,7 +111,7 @@ void setup() {
   /********** LCD SETUP **********/
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
-  lcd.print("MAX31855 test");
+  lcd.print("Stabilizing MAX31855");
   // wait for MAX chip to stabilize
   delay(500);
   
@@ -126,8 +128,12 @@ void setup() {
     return;
   }
   else
+  {
     sdCardInited = true;
-  
+    writeToSD("setup,buttons");
+    writeToSD("setup,lcd");
+    writeToSD("setup,sd card");
+  }
   
   /********** PID Setup **********/
   //initialize the variables we're linked to
@@ -138,6 +144,7 @@ void setup() {
   myPID.SetOutputLimits(0, WindowSize);
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
+  writeToSD("setup,pid");
 }// setup
 
 void writeToSD(String msg)
@@ -163,19 +170,7 @@ void writeToSD(String msg)
  ********************************/
 void loop()
 {
-  /*
-  //Serial.println("low");
-  digitalWrite(RELAY,LOW);
-     
-   /********** DELAY 30 SEC **********
-   delay(1000);              // wait for 30 seconds
-  
-  //Serial.println("high");
-  digitalWrite(RELAY,HIGH);
-     
-   /********** DELAY 30 SEC **********
-   delay(1000);              // wait for 30 seconds
-   //*/
+   //clickRelay();
    
   
    /********** THERMOCOUPLE LOOP **********/
@@ -212,7 +207,7 @@ void loop()
      
      
    /********** DELAY 30 SEC **********/
-   delay(30000);              // wait for 30 seconds
+   //delay(30000);              // wait for 30 seconds
 }// loop
 
 
@@ -250,6 +245,21 @@ void loop()
   //  */
  }// kiln
  
+void clickRelay()
+{
+  //Serial.println("low");
+  digitalWrite(RELAY,LOW);
+     
+   /********** DELAY 30 SEC **********/
+   delay(1000);              // wait for 30 seconds
+  
+  //Serial.println("high");
+  digitalWrite(RELAY,HIGH);
+     
+   /********** DELAY 30 SEC **********/
+   delay(1000);              // wait for 30 seconds
+   //*/
+}// clickRelay
  
 int parseButtons()
 {
@@ -262,6 +272,8 @@ int parseButtons()
      if (buttonState == HIGH) // if the state has changed, and the state is HIGH meaning the button is not pressed, perform the button's ev0ent
      {
        thisRun.candlePressed();
+       writeToSD("parseButtons,candlePressed");
+       //clickRelay(); // click the relay when the button is pressed
      }// button released
      else
      {
@@ -277,6 +289,8 @@ int parseButtons()
      if (buttonState == HIGH) // if the state has changed, and the state is HIGH meaning the button is not pressed, perform the button's event
      {
        thisRun.conePressed();
+       writeToSD("parseButtons,conePressed");
+       //clickRelay(); // click the relay when the button is pressed
      }// button released
      else
      {
@@ -292,6 +306,8 @@ int parseButtons()
      if (buttonState == HIGH) // if the state has changed, and the state is HIGH meaning the button is not pressed, perform the button's event
      {
        thisRun.holdPressed();
+       writeToSD("parseButtons,holdPressed");
+       //clickRelay(); // click the relay when the button is pressed
      }// button released
      else
      {
@@ -307,6 +323,8 @@ int parseButtons()
      if (buttonState == HIGH) // if the state has changed, and the state is HIGH meaning the button is not pressed, perform the button's event
      {
        thisRun.speedPressed();
+       writeToSD("parseButtons,speedPressed");
+       //clickRelay(); // click the relay when the button is pressed
      }// button released
      else
      {
@@ -322,6 +340,8 @@ int parseButtons()
      if (buttonState == HIGH) // if the state has changed, and the state is HIGH meaning the button is not pressed, perform the button's event
      {
        thisRun.startPressed();
+       writeToSD("parseButtons,startPressed");
+       //clickRelay(); // click the relay when the button is pressed
      }// button released
      else
      {
@@ -337,6 +357,8 @@ int parseButtons()
      if (buttonState == HIGH) // if the state has changed, and the state is HIGH meaning the button is not pressed, perform the button's event
      {
        thisRun.clearPressed();
+       writeToSD("parseButtons,clearPressed");
+       //clickRelay(); // click the relay when the button is pressed
      }// button released
      else
      {
