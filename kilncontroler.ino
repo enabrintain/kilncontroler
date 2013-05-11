@@ -28,8 +28,6 @@
   http://lordvon64.blogspot.com/2012/01/simple-arduino-double-to-string.html
  *******************************************************************/
 
-TODO: Add a delete log step to the setup so the log doesnt get cluttered with bad data
-
 #include "Adafruit_MAX31855.h"
 #include "KilnRun.h" 
 #include <LiquidCrystal.h>
@@ -111,9 +109,12 @@ void setup() {
   /********** LCD SETUP **********/
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
-  lcd.print("Stabilizing MAX31855");
+   lcd.setCursor(0, 0);
+  lcd.print("Stabilizing ");
+   lcd.setCursor(0, 1);
+  lcd.print(" Probe");
   // wait for MAX chip to stabilize
-  delay(500);
+  delay(1500);
   
   
   /********** SD SETUP **********/
@@ -129,7 +130,13 @@ void setup() {
   }
   else
   {
+   lcd.setCursor(0, 0);
+  lcd.print("SD Init ");
+   lcd.setCursor(0, 1);
+  lcd.print(" Del Log");
+  delay(1500);
     sdCardInited = true;
+    SD.remove("kiln_log.txt");
     writeToSD("setup,buttons");
     writeToSD("setup,lcd");
     writeToSD("setup,sd card");
@@ -137,6 +144,12 @@ void setup() {
   
   /********** PID Setup **********/
   //initialize the variables we're linked to
+   lcd.setCursor(0, 0);
+  lcd.print("PID Init ");
+   lcd.setCursor(0, 1);
+  lcd.print("");
+  delay(1500);
+  
   Input = analogRead(0);
   windowStartTime = millis();
   Setpoint = 100;
@@ -153,10 +166,10 @@ void writeToSD(String msg)
     return;
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  File dataFile = SD.open("kiln_log.txt", FILE_WRITE);
+  File dataFile = SD.open("kiln_log.csv", FILE_WRITE);
   // if the file is available, write to it:
   if (dataFile) {
-    dataFile.println(millis() + "," + msg);
+    dataFile.println(doubleToString(millis(), 0) + "," + msg);
     dataFile.close();
   }  
   // if the file isn't open, pop up an error:
@@ -207,7 +220,7 @@ void loop()
      
      
    /********** DELAY 30 SEC **********/
-   //delay(30000);              // wait for 30 seconds
+   delay(30000);              // wait for 30 seconds
 }// loop
 
 
