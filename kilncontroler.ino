@@ -25,7 +25,7 @@
   example library
  ******************************************************************* 
   The double to string code is from
-  http://lordvon64.blogspot.com/2012/01/simple-arduino-double-to-string.html
+  https://gist.github.com/jmccrohan/2343665
  *******************************************************************/
 
 #include "Adafruit_MAX31855.h"
@@ -164,12 +164,18 @@ void writeToSD(String msg)
 {
   if(!sdCardInited)
     return;
+  
+  float floatvar = millis();
+  char dtostrfbuffer[15];  
+  dtostrf(floatvar,8, 2, dtostrfbuffer);
+  String time = String(dtostrfbuffer);
+    
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
   File dataFile = SD.open("kiln_log.csv", FILE_WRITE);
   // if the file is available, write to it:
   if (dataFile) {
-    dataFile.println(doubleToString(millis(), 0) + "," + msg);
+    dataFile.println(time + "," + msg);
     dataFile.close();
   }  
   // if the file isn't open, pop up an error:
@@ -188,7 +194,8 @@ void loop()
   
    /********** THERMOCOUPLE LOOP **********/
    double temperature = thermocouple.readFarenheit();
-   writeToSD("loop,temp:,"+doubleToString(temperature,1));
+   
+   writeToSD("loop,temp:,"+doubleToString(temperature));
    
    
    /********** LCD LOOP **********/
@@ -220,7 +227,7 @@ void loop()
      
      
    /********** DELAY 30 SEC **********/
-   delay(30000);              // wait for 30 seconds
+   delay(3000);              // wait for 30 seconds
 }// loop
 
 
@@ -382,22 +389,15 @@ int parseButtons()
   return buttonState;
 }// parseButton
 
-//Rounds down (via intermediary integer conversion truncation)
-String doubleToString(double input,int decimalPlaces){
-  if(decimalPlaces!=0){
-    String string = String((int)(input*pow(10,decimalPlaces)));
-    if(abs(input)<1){
-      if(input>0)
-        string = "0"+string;
-      else if(input<0)
-        string = string.substring(0,1)+"0"+string.substring(1);
-    }
-    return string.substring(0,string.length()-decimalPlaces)+"."+string.substring(string.length()-decimalPlaces);
-  }
-  else
-  {
-    return String((int)input);
-  }
-}
+
+String doubleToString(double input){
+  
+  float floatvar = millis();
+  char dtostrfbuffer[15];  
+  dtostrf(input,8, 1, dtostrfbuffer);
+  
+  return String(dtostrfbuffer);
+  
+}//*/
 
 
