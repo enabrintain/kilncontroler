@@ -45,9 +45,13 @@ const int SD_MISO = 12; // sd card
 const int SD_MOSI = 11; // sd card
 const int SD_CS = 10; // sd card
 
-const int THERM_DO = 1; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
-const int THERM_CS = 2; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
-const int THERM_CLK = 3; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
+const int THERM_DO_1 = 1; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
+const int THERM_CS_1 = 2; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
+const int THERM_CLK_1 = 3; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
+
+const int THERM_DO_2 = A0; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
+const int THERM_CS_2 = A1; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
+const int THERM_CLK_2 = A2; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
 
 const int CANDLE = 14; // candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
 const int CONE = 15; // choose kiln temp
@@ -60,7 +64,8 @@ const int CLEAR = 19; // pushing this resets things
 KilnRun thisRun;
 
 // Initialize the Thermocouple
-Adafruit_MAX31855 thermocouple(THERM_CLK, THERM_CS, THERM_DO);
+Adafruit_MAX31855 hotThermocouple(THERM_CLK_1, THERM_CS_1, THERM_DO_1);
+Adafruit_MAX31855 coldThermocouple(THERM_CLK_2, THERM_CS_2, THERM_DO_2);
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(4, 5, 6, 7, 8, 9);
 
@@ -136,7 +141,7 @@ void setup() {
   lcd.print(" Del Log");
   delay(1500);
     sdCardInited = true;
-    SD.remove("kiln_log.txt");
+    SD.remove("kiln_log.csv");
     writeToSD("setup,buttons");
     writeToSD("setup,lcd");
     writeToSD("setup,sd card");
@@ -150,6 +155,7 @@ void setup() {
   lcd.print("");
   delay(1500);
   
+  //TODO: analogRead(0); is the wrong input var.
   Input = analogRead(0);
   windowStartTime = millis();
   Setpoint = 100;
@@ -193,16 +199,19 @@ void loop()
    
   
    /********** THERMOCOUPLE LOOP **********/
-   double temperature = thermocouple.readFarenheit();
+   double innerTemp = hotThermocouple.readFarenheit(); // hot end of kiln thermocouple
+   double outerTemp = coldThermocouple.readFarenheit(); // 'cold' end of thermocouple
+   double ambientTemp = hotThermocouple.readInternalF(); // ambient temperature (of the chip that matters)
+   double temperature = innerTemp + outerTemp - ambientTemp; // only add the temperature difference between the 'cold' end and the ambient temp.
    
-   writeToSD("loop,temp:,"+doubleToString(temperature));
+   writeToSD("loop,temp:,"+doubleToString(temperature)+","+doubleToString(ambientTemp)+","+doubleToString(innerTemp)+","+doubleToString(outerTemp));
    
    
    /********** LCD LOOP **********/
    // basic readout test, just print the current temp
    lcd.setCursor(0, 0);
    lcd.print("Int. Temp = ");
-   lcd.println(thermocouple.readInternalF());
+   lcd.println(hotThermocouple.readInternalF());
    lcd.print("  "); 
    lcd.setCursor(0, 1);
    if (isnan(temperature)) 
