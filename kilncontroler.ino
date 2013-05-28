@@ -26,6 +26,9 @@
  ******************************************************************* 
   The double to string code is from
   https://gist.github.com/jmccrohan/2343665
+ *******************************************************************
+  I got the layout for the buttons from
+  http://rayshobby.net/?p=16
  *******************************************************************/
 
 #include "Adafruit_MAX31855.h"
