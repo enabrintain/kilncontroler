@@ -9,17 +9,15 @@ Load this with info on how the buttons will work and how the software calculates
 
 More info at https://256.makerslocal.org/wiki/Ceramic_Kiln/Controller
 
-Also This code is in slight disagreement with the Arduino Pin map listed on the wiki. 
-The code is wrong and the wiki is right.
 
 This is the current pin diagram from the wiki. Trust the wiki, have faith in the wiki.
 Pin   Group 	Use
-A5  Button 	Candle Delay
-A4 	Button 	Cone Selection
-A3 	Button 	Hold At Target Temp Delay
-A2 	Button 	Speed Select
-A1 	Button 	Start
-A0 	Button 	Clear Selections 
+A5  MAX31855 Thermister 	CLK
+A4 	MAX31855 Thermister 	CS
+A3 	MAX31855 Thermister 	d0
+A2 	
+A1 	
+A0 	6 Buttons	pin
 D13 	SD Card Shield 	SCK
 D12 	SD Card Shield 	MISO
 D11 	SD Card Shield 	MOSI
