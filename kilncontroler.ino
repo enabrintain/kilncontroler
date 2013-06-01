@@ -52,23 +52,24 @@ const int THERM_DO_1 = 1; // (data out) is an output from the MAX31855 (input to
 const int THERM_CS_1 = 2; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
 const int THERM_CLK_1 = 3; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
 
-const int THERM_DO_2 = A0; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
-const int THERM_CS_2 = A1; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
-const int THERM_CLK_2 = A2; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
+const int THERM_DO_2 = A3; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
+const int THERM_CS_2 = A4; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
+const int THERM_CLK_2 = A5; // (clock) is an input to the MAX31855 (output from microcontroller) which indicates when to present another bit of data
 
-const int CANDLE = 14; // candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
+/*const int CANDLE = 14; // candle (raise kiln to 200F and hold it there for 2, 4, 6, 8, or 12 hours before firing - cooks out all the water
 const int CONE = 15; // choose kiln temp
 const int HOLD = 16; // hold time at target temp, in hrs
 const int SPEED = 17; // choose the speed/mode program 
 const int START= 18; // starts the kiln heating program, CONE, HOLD, and SPEED are no longer read after starting, CLEAR will reset this.
-const int CLEAR = 19; // pushing this resets things
+const int CLEAR = 19; // pushing this resets things*/
 
 //
 KilnRun thisRun;
 
 // Initialize the Thermocouple
-Adafruit_MAX31855 hotThermocouple(THERM_CLK_1, THERM_CS_1, THERM_DO_1);
 Adafruit_MAX31855 coldThermocouple(THERM_CLK_2, THERM_CS_2, THERM_DO_2);
+Adafruit_MAX31855 hotThermocouple(THERM_CLK_1, THERM_CS_1, THERM_DO_1);
+
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(4, 5, 6, 7, 8, 9);
 
@@ -94,8 +95,9 @@ bool sdCardInited = false;
  * SETUP
  ********************************/
 void setup() {
+  //Serial.begin(9600);
     
-  /********** BUTTON SETUP **********/
+  /********** BUTTON SETUP **********
   pinMode(CANDLE, INPUT); // initialize the button pin as a input
   digitalWrite(CANDLE, HIGH);       // turn on pullup resistor, *pull-up configuration — when the button is not pressed, the Arduino will sense high voltage. 
   pinMode(CONE, INPUT); // initialize the button pin as a input
@@ -107,7 +109,7 @@ void setup() {
   pinMode(START, INPUT); // initialize the button pin as a input
   digitalWrite(START, HIGH);       // turn on pullup resistor
   pinMode(CLEAR, INPUT); // initialize the button pin as a input
-  digitalWrite(CLEAR, HIGH);       // turn on pullup resistor
+  digitalWrite(CLEAR, HIGH);       // turn on pullup resistor*/
   
   // initialize the LED as an output
   pinMode(RELAY, OUTPUT); // initialize the relay pin as output
@@ -117,7 +119,7 @@ void setup() {
   /********** LCD SETUP **********/
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
-   lcd.setCursor(0, 0);
+  lcd.setCursor(0, 0);
   lcd.print("Stabilizing ");
    lcd.setCursor(0, 1);
   lcd.print(" Probe");
@@ -139,9 +141,9 @@ void setup() {
   else
   {
    lcd.setCursor(0, 0);
-  lcd.print("SD Init ");
+  lcd.print("SD Init       ");
    lcd.setCursor(0, 1);
-  lcd.print(" Del Log");
+  lcd.print(" Del Log      ");
   delay(1500);
     sdCardInited = true;
     SD.remove("kiln_log.csv");
@@ -153,7 +155,7 @@ void setup() {
   /********** PID Setup **********/
   //initialize the variables we're linked to
    lcd.setCursor(0, 0);
-  lcd.print("PID Init ");
+  lcd.print("PID Init      ");
    lcd.setCursor(0, 1);
   lcd.print("");
   delay(1500);
@@ -167,7 +169,64 @@ void setup() {
   //turn the PID on
   myPID.SetMode(AUTOMATIC);
   writeToSD("setup,pid");
+  writeToSD("1 ,2 ,temperature,ambientTemp,hotThermocouple,coldThermocouple");
 }// setup
+
+/********************************
+ * MAIN LOOP
+ ********************************/
+void loop()
+{
+   //clickRelay();
+   
+  
+   /********** THERMOCOUPLE LOOP **********/
+   double hotTemp = hotThermocouple.readFarenheit(); // hot end of kiln thermocouple
+   double coldTemp = coldThermocouple.readFarenheit(); // 'cold' end of thermocouple
+   double ambientTemp = coldThermocouple.readInternalF(); // ambient temperature (of the chip that matters)
+   double temperature = hotTemp + coldTemp - ambientTemp; // only add the temperature difference between the 'cold' end and the ambient temp.
+   
+   lcd.setCursor(0, 0);
+   lcd.print(doubleToString(temperature)+"F     ");
+   delay(500);              // wait for 1/2 second
+   writeToSD("loop,temp:,"+doubleToString(temperature)+","+doubleToString(ambientTemp)+","+
+     doubleToString(hotTemp)+","+doubleToString(coldTemp));
+   
+   /********** LCD LOOP **********/
+   // basic readout test, just print the current temp
+   lcd.setCursor(0, 0);
+   lcd.print("Cold F = ");
+   lcd.print(coldTemp);
+   lcd.print("  "); 
+   lcd.setCursor(0, 1);
+   if (isnan(temperature)) 
+   {
+     lcd.print("T/C Problem");
+   } 
+   else 
+   {//*/
+     lcd.print("Hot F = "); 
+     lcd.print(hotTemp);
+     lcd.print("  "); 
+   }//*/
+   
+   
+   /********** INPUT BUTTON LOOP **********/
+   parseButtons();
+   
+   
+   /********** PID LOOP **********/
+   if(thisRun.isStarted())
+     kiln(temperature);
+     
+     
+   /********** DELAY 30 SEC **********/
+   //delay(30000);              // wait for 30 seconds
+   delay(3000);              // wait for 30 seconds
+}// loop
+
+
+
 
 void writeToSD(String msg)
 {
@@ -192,58 +251,6 @@ void writeToSD(String msg)
     //Serial.println("error opening datalog.txt");
   } 
 }// writeToSD
-
-/********************************
- * MAIN LOOP
- ********************************/
-void loop()
-{
-   //clickRelay();
-   
-  
-   /********** THERMOCOUPLE LOOP **********/
-   double innerTemp = hotThermocouple.readFarenheit(); // hot end of kiln thermocouple
-   double outerTemp = coldThermocouple.readFarenheit(); // 'cold' end of thermocouple
-   double ambientTemp = hotThermocouple.readInternalF(); // ambient temperature (of the chip that matters)
-   double temperature = innerTemp + outerTemp - ambientTemp; // only add the temperature difference between the 'cold' end and the ambient temp.
-   
-   writeToSD("loop,temp:,"+doubleToString(temperature)+","+doubleToString(ambientTemp)+","+doubleToString(innerTemp)+","+doubleToString(outerTemp));
-   
-   
-   /********** LCD LOOP **********/
-   // basic readout test, just print the current temp
-   lcd.setCursor(0, 0);
-   lcd.print("Int. Temp = ");
-   lcd.println(hotThermocouple.readInternalF());
-   lcd.print("  "); 
-   lcd.setCursor(0, 1);
-   if (isnan(temperature)) 
-   {
-     lcd.print("T/C Problem");
-   } 
-   else 
-   {
-     lcd.print("F = "); 
-     lcd.print(temperature);
-     lcd.print("  "); 
-   }//*/
-   
-   
-   /********** INPUT BUTTON LOOP **********/
-   parseButtons();
-   
-   
-   /********** PID LOOP **********/
-   if(thisRun.isStarted())
-     kiln(temperature);
-     
-     
-   /********** DELAY 30 SEC **********/
-   delay(3000);              // wait for 30 seconds
-}// loop
-
-
-
 
 /********************************
  * Called from MAIN LOOP
@@ -297,7 +304,7 @@ int parseButtons()
 {
    int buttonState = 0;         // current state of the button  
   
-   buttonState = digitalRead(CANDLE); // read the pushbutton input pin   
+   buttonState = LOW;//digitalRead(CANDLE); // read the pushbutton input pin   
    //   *pull-up configuration — when the button is not pressed, the Arduino will sense high voltage.
    if (buttonState != lastCANDLE) // compare the buttonState to its previous state
    {
@@ -314,7 +321,7 @@ int parseButtons()
    }//button state changed
    lastCANDLE = buttonState;// save the current state as the last state
    
-   buttonState = digitalRead(CONE); // read the pushbutton input pin   
+   buttonState = LOW;//digitalRead(CONE); // read the pushbutton input pin   
    //   *pull-up configuration — when the button is not pressed, the Arduino will sense high voltage.
    if (buttonState != lastCONE) // compare the buttonState to its previous state
    {
@@ -331,7 +338,7 @@ int parseButtons()
    }//button state changed
    lastCONE = buttonState;// save the current state as the last state
    
-   buttonState = digitalRead(HOLD); // read the pushbutton input pin   
+   buttonState = LOW;//digitalRead(HOLD); // read the pushbutton input pin   
    //   *pull-up configuration — when the button is not pressed, the Arduino will sense high voltage.
    if (buttonState != lastHOLD) // compare the buttonState to its previous state
    {
@@ -348,7 +355,7 @@ int parseButtons()
    }//button state changed
    lastHOLD = buttonState;// save the current state as the last state
    
-   buttonState = digitalRead(SPEED); // read the pushbutton input pin   
+   buttonState = LOW;//digitalRead(SPEED); // read the pushbutton input pin   
    //   *pull-up configuration — when the button is not pressed, the Arduino will sense high voltage.
    if (buttonState != lastSPEED) // compare the buttonState to its previous state
    {
@@ -365,7 +372,7 @@ int parseButtons()
    }//button state changed
    lastSPEED = buttonState;// save the current state as the last state
    
-   buttonState = digitalRead(START); // read the pushbutton input pin   
+   buttonState = LOW;//digitalRead(START); // read the pushbutton input pin   
    //   *pull-up configuration — when the button is not pressed, the Arduino will sense high voltage.
    if (buttonState != lastSTART) // compare the buttonState to its previous state
    {
@@ -382,7 +389,7 @@ int parseButtons()
    }//button state changed
    lastSTART = buttonState;// save the current state as the last state
    
-   buttonState = digitalRead(CLEAR); // read the pushbutton input pin   
+   buttonState = LOW;//digitalRead(CLEAR); // read the pushbutton input pin   
    //   *pull-up configuration — when the button is not pressed, the Arduino will sense high voltage.
    if (buttonState != lastCLEAR) // compare the buttonState to its previous state
    {
