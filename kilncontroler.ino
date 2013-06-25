@@ -179,52 +179,88 @@ void loop()
 {
    //clickRelay();
    
-  
-   /********** THERMOCOUPLE LOOP **********/
-   double hotTemp = hotThermocouple.readFarenheit(); // hot end of kiln thermocouple
-   double coldTemp = coldThermocouple.readFarenheit(); // 'cold' end of thermocouple
-   double ambientTemp = coldThermocouple.readInternalF(); // ambient temperature (of the chip that matters)
-   double temperature = hotTemp + coldTemp - ambientTemp; // only add the temperature difference between the 'cold' end and the ambient temp.
-   
-   lcd.setCursor(0, 0);
-   lcd.print(doubleToString(temperature)+"F     ");
-   delay(500);              // wait for 1/2 second
-   writeToSD("loop,temp:,"+doubleToString(temperature)+","+doubleToString(ambientTemp)+","+
-     doubleToString(hotTemp)+","+doubleToString(coldTemp));
-   
-   /********** LCD LOOP **********/
-   // basic readout test, just print the current temp
-   lcd.setCursor(0, 0);
-   lcd.print("Cold F = ");
-   lcd.print(coldTemp);
-   lcd.print("  "); 
-   lcd.setCursor(0, 1);
-   if (isnan(temperature)) 
-   {
-     lcd.print("T/C Problem");
-   } 
-   else 
-   {//*/
-     lcd.print("Hot F = "); 
-     lcd.print(hotTemp);
-     lcd.print("  "); 
-   }//*/
+  /********** THERMOCOUPLE LOOP **********/
+  double temperature = readTemp(0);
    
    
-   /********** INPUT BUTTON LOOP **********/
-   parseButtons();
+  /********** INPUT BUTTON LOOP **********/
+  parseButtons();
    
    
-   /********** PID LOOP **********/
-   if(thisRun.isStarted())
-     kiln(temperature);
+  /********** PID LOOP **********/
+  if(thisRun.isStarted())
+    kiln(temperature);
      
      
-   /********** DELAY 30 SEC **********/
-   //delay(30000);              // wait for 30 seconds
-   delay(3000);              // wait for 30 seconds
+  /********** DELAY 30 SEC **********/
+  delay(300000);              // wait for 5 minutes
+  //delay(3000);              // wait for 3 seconds
 }// loop
 
+
+double readTemp(int tryCount)
+{
+  if(tryCount>10)
+  {
+    return -1;
+  }
+  
+  if(tryCount>2)
+  {
+    //try resetting the chips
+    coldThermocouple = Adafruit_MAX31855(THERM_CLK_2, THERM_CS_2, THERM_DO_2);
+    hotThermocouple = Adafruit_MAX31855(THERM_CLK_1, THERM_CS_1, THERM_DO_1);
+    // wait for MAX chip to stabilize
+    delay(1500);
+  }
+  
+  double hotTemp = hotThermocouple.readFarenheit(); // hot end of kiln thermocouple
+  double coldTemp = coldThermocouple.readFarenheit(); // 'cold' end of thermocouple
+  double ambientTemp = coldThermocouple.readInternalF(); // ambient temperature (of the chip that matters)
+  double temperature = hotTemp + coldTemp - ambientTemp; // only add the temperature difference between the 'cold' end and the ambient temp.
+  
+  writeToSD("loop,temp:,"+doubleToString(temperature)+","+doubleToString(ambientTemp)+","+
+      doubleToString(hotTemp)+","+doubleToString(coldTemp)+", "+doubleToString(tryCount));
+      
+  if(isnan(temperature))
+  {
+    delay(3000); //3sec delay
+    temperature = readTemp(tryCount+1);
+  }
+  
+  lcd.setCursor(0, 0);
+  if(temperature==-1)
+  {
+    lcd.print("Temp Failed");
+    lcd.setCursor(0, 1);
+    lcd.print("           ");
+  }
+  else
+  {
+    lcd.print(doubleToString(temperature)+"F     ");
+    delay(500);              // wait for 1/2 second
+     
+    /********** LCD LOOP **********/
+    // basic readout test, just print the current temp
+    lcd.setCursor(0, 0);
+    lcd.print("Cold F = ");
+    lcd.print(coldTemp);
+    lcd.print("  "); 
+    lcd.setCursor(0, 1);
+    if (isnan(temperature)) 
+    {
+      lcd.print("T/C Problem");
+    } 
+    else 
+    {//*/
+      lcd.print("Hot F = "); 
+      lcd.print(hotTemp);
+      lcd.print("  "); 
+    }//*/
+  }
+  
+  return temperature;
+}// readTemp
 
 
 
