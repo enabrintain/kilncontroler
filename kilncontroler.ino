@@ -43,10 +43,10 @@
 
 const int RELAY = A1; // the pin for turning on and off the heating coils
 
-const int SD_SCK = 13; // sd card
-const int SD_MISO = 12; // sd card
-const int SD_MOSI = 11; // sd card
-const int SD_CS = 10; // sd card
+const int SCK = 13; // sd card
+const int MISO = 12; // sd card
+const int MOSI = 11; // sd card
+const int CS = 10; // sd card
 
 const int THERM_DO_1 = A2; // (data out) is an output from the MAX31855 (input to the microcontroller) which carries each bit of data
 const int THERM_CS_1 = 2; // (chip select) is an input to the MAX31855 (output from the microcontroller) which tells the chip when its time to read the thermocouple and output more data.
