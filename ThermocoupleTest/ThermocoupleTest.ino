@@ -20,7 +20,7 @@ Adafruit_MAX31855 hotThermocouple(THERM_CLK_1, THERM_CS_1, THERM_DO_1);
 
 void setup() {
   Serial.begin(9600);
-}
+}// setup
 
 void loop() {
   // put your main code here, to run repeatedly: 
